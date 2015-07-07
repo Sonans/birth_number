@@ -1,8 +1,6 @@
 # BirthNumber
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/birth_number`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+This is a simple Ruby gem for parsing and validating Birth Numbers, the national identification number used in Norway. It has been extracted from one of our internal projects for reuse, and released as open-source as it might be useful for others as well.
 
 ## Installation
 
@@ -22,7 +20,21 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```rb
+birth_number = BirthNumber.parse('01017000027')
+birth_number.birth_date #=> #<Date: 1970-01-01 ((2440588j,0s,0n),+0s,2299161j)>
+birth_number.personal_number # => "00027
+birth_number.to_s #=> "01017000027"
+
+birth_number = BirthNumber.new('1970-01-01', '00027')
+birth_number.to_s #=> "01017000027"
+
+birth_number.valid? #=> true
+birth_number.male? #=> false
+birth_number.female? #=> true
+
+birth_number.to_s #=> "01017000027"
+```
 
 ## Contributing
 
