@@ -86,6 +86,24 @@ class BirthNumber
     birth_date.strftime('%d%m%y') + format('%05d', personal_number.to_i)
   end
 
+  def ==(other)
+    if other.respond_to?(:birth_date) && other.respond_to?(:personal_number)
+      birth_date == other.birth_date && personal_number == other.personal_number
+    end
+  end
+
+  def ===(other)
+    to_s == other.to_s
+  end
+
+  def eql?(other)
+    self == other
+  end
+
+  def hash
+    to_s.hash
+  end
+
   def self._parse_birth_date(birth_number)
     day, month, year   = birth_number.chars.take(6)
                          .each_slice(2).map(&:join).map(&:to_i)

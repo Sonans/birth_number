@@ -34,6 +34,9 @@ birth_number.male? #=> false
 birth_number.female? #=> true
 
 birth_number.to_s #=> "01017000027"
+
+birth_number == '01017000027' #=> false
+birth_number === '01017000027' #=> true
 ```
 
 ## Contributing

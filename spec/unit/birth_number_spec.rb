@@ -101,4 +101,30 @@ RSpec.describe BirthNumber do
       end
     end
   end
+
+  describe '==' do
+    it 'is true for the same birth number' do
+      expect(described_class.parse('01017000027')).to eq described_class.parse('01017000027')
+    end
+
+    it 'is false for a different birth number' do
+      expect(described_class.parse('01017000027')).to_not eq described_class.parse('12056647528')
+    end
+  end
+
+  describe '===' do
+    it 'is true for the same birth number given as a string' do
+      expect(described_class.parse('01017000027')).to satisfy { |value| value === '01017000027' }
+    end
+  end
+
+  describe 'eql?' do
+    it 'is true for the same birth number' do
+      expect(described_class.parse('01017000027')).to eql described_class.parse('01017000027')
+    end
+
+    it 'is false for a different birth number' do
+      expect(described_class.parse('01017000027')).to_not eql described_class.parse('12056647528')
+    end
+  end
 end
