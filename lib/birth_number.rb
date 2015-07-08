@@ -11,13 +11,13 @@ require 'date'
 # This implementation is based of the description on the Norwegian
 # Wikipedia page.
 #
-# @see https://en.wikipedia.org/wiki/National_identification_number#Norway Birth Number on Wikipedia
-# @see https://no.wikipedia.org/wiki/Fødselsnummer Fødselsnummer on Norwegian Wikipedia
+# @see https://en.wikipedia.org/wiki/National_identification_number#Norway
+#   Birth Number on Wikipedia
+# @see https://no.wikipedia.org/wiki/Fødselsnummer
+#   Fødselsnummer on Norwegian Wikipedia
+#
+# @author Jo-Herman Haugholt <jo-herman@sonans.no>
 class BirthNumber
-  BIRTH_NUMBER_REGEX     = /^([0-2][0-9]|3[0-1])(0[1-9]|1[0-2])(\d{7})$/
-  BIRTH_NUMBER_WEIGHTS_1 = [3, 7, 6, 1, 8, 9, 4, 5, 2]
-  BIRTH_NUMBER_WEIGHTS_2 = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2]
-
   # Birth Date
   # @return [Date]
   attr_accessor :birth_date
@@ -37,7 +37,7 @@ class BirthNumber
       fail ArgumentError, 'Birth number must be 11 digits'
     end
 
-    birth_date = _parse_birth_date(birth_number)
+    birth_date = parse_birth_date(birth_number)
 
     new(birth_date, birth_number[6, 5])
   end
@@ -45,10 +45,12 @@ class BirthNumber
   # Check if a given birth number is valid
   # @param [#to_s] birth_number
   def self.valid?(birth_number)
-    parse(birth_number).valid?
+    digits = birth_number.to_s.chars.map(&:to_i)
 
-    rescue ArgumentError
-      return false
+    digits.last(2) == control_digits(digits)
+
+  rescue ArgumentError
+    return false
   end
 
   # @param [#to_date,#to_s] birth_date
@@ -65,9 +67,7 @@ class BirthNumber
 
   # Check if this birth number is valid
   def valid?
-    digits = to_s.chars.map(&:to_i)
-
-    digits.last(2) == control_digits(digits)
+    BirthNumber.valid?(self)
   end
 
   # Is this birth number assigned to a man
@@ -87,9 +87,11 @@ class BirthNumber
   end
 
   def ==(other)
-    if other.respond_to?(:birth_date) && other.respond_to?(:personal_number)
-      birth_date == other.birth_date && personal_number == other.personal_number
+    unless other.respond_to?(:birth_date) && other.respond_to?(:personal_number)
+      return false
     end
+
+    birth_date == other.birth_date && personal_number == other.personal_number
   end
 
   def ===(other)
@@ -104,17 +106,29 @@ class BirthNumber
     to_s.hash
   end
 
-  def self._parse_birth_date(birth_number)
+  # @!group Private Class Methods
+  BIRTH_NUMBER_REGEX     = /^([0-2][0-9]|3[0-1])(0[1-9]|1[0-2])(\d{7})$/
+  BIRTH_NUMBER_WEIGHTS_1 = [3, 7, 6, 1, 8, 9, 4, 5, 2]
+  BIRTH_NUMBER_WEIGHTS_2 = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2]
+
+  # Parses the date part of a birth number
+  # @param [String] birth_number
+  # @return [Date]
+  def self.parse_birth_date(birth_number)
     day, month, year   = birth_number.chars.take(6)
                          .each_slice(2).map(&:join).map(&:to_i)
     individual_numbers = birth_number[6, 3].to_i
 
-    year += _parse_century(year, individual_numbers)
+    year += parse_century(year, individual_numbers)
 
     Date.new(year, month, day)
   end
 
-  def self._parse_century(year, individual_numbers)
+  # Calculates the century of a year based on the individual numbers
+  # @param [Integer] year
+  # @param [Integer] individual_numbers
+  # @return [Integer]
+  def self.parse_century(year, individual_numbers)
     case
     when individual_numbers < 500 || (individual_numbers >= 900 && year >= 40)
       1900
@@ -125,18 +139,21 @@ class BirthNumber
     end
   end
 
-  private_class_method :_parse_birth_date, :_parse_century
-
-  private
-
-  def control_digits(digits)
+  # Calculates the two control digits given an array of digits
+  # @param [Array<Integer>] digits
+  # @return [(Integer, Integer)]
+  def self.control_digits(digits)
     [
       control_digit(digits.take(9), BIRTH_NUMBER_WEIGHTS_1),
       control_digit(digits.take(10), BIRTH_NUMBER_WEIGHTS_2)
     ]
   end
 
-  def control_digit(digits, weights)
+  # Calculates the control digit, given an array of digits and weights.
+  # @param [Array<Integer>] digits
+  # @param [Array<Integer>] weights
+  # @return [Integer]
+  def self.control_digit(digits, weights)
     control_digit = digits
                     .zip(weights)
                     .map { |digit, weight| digit * weight }
@@ -145,4 +162,12 @@ class BirthNumber
     control_digit = 0 if control_digit == 11
     control_digit
   end
+
+  private_constant :BIRTH_NUMBER_REGEX,
+                   :BIRTH_NUMBER_WEIGHTS_1,
+                   :BIRTH_NUMBER_WEIGHTS_2
+  private_class_method :parse_birth_date,
+                       :parse_century,
+                       :control_digits,
+                       :control_digit
 end
