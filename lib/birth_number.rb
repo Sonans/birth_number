@@ -35,7 +35,7 @@ class BirthNumber
   def self.parse(birth_number)
     birth_number = birth_number.to_s
     unless birth_number =~ /^\d{11}$/
-      fail ArgumentError, 'Birth number must be 11 digits'
+      raise ArgumentError, 'Birth number must be 11 digits'
     end
 
     birth_date = parse_birth_date(birth_number)
@@ -116,8 +116,8 @@ class BirthNumber
   # @param [String] birth_number
   # @return [Date]
   def self.parse_birth_date(birth_number)
-    day, month, year   = birth_number.chars.take(6)
-                         .each_slice(2).map(&:join).map(&:to_i)
+    day, month, year   = birth_number.chars.take(6).each_slice(2)
+                                     .map(&:join).map(&:to_i)
     individual_numbers = birth_number[6, 3].to_i
 
     year += parse_century(year, individual_numbers)
@@ -130,10 +130,9 @@ class BirthNumber
   # @param [Integer] individual_numbers
   # @return [Integer]
   def self.parse_century(year, individual_numbers)
-    case
-    when individual_numbers < 500 || (individual_numbers >= 900 && year >= 40)
+    if individual_numbers < 500 || (individual_numbers >= 900 && year >= 40)
       1900
-    when individual_numbers < 750 && year >= 54
+    elsif individual_numbers < 750 && year >= 54
       1800
     else
       2000
