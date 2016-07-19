@@ -1,3 +1,4 @@
+# frozen-string-literal: true
 require 'birth_number/version'
 require 'date'
 
@@ -108,8 +109,8 @@ class BirthNumber
 
   # @!group Private Class Methods
   BIRTH_NUMBER_REGEX     = /^([0-2][0-9]|3[0-1])(0[1-9]|1[0-2])(\d{7})$/
-  BIRTH_NUMBER_WEIGHTS_1 = [3, 7, 6, 1, 8, 9, 4, 5, 2]
-  BIRTH_NUMBER_WEIGHTS_2 = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2]
+  BIRTH_NUMBER_WEIGHTS_1 = [3, 7, 6, 1, 8, 9, 4, 5, 2].freeze
+  BIRTH_NUMBER_WEIGHTS_2 = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2].freeze
 
   # Parses the date part of a birth number
   # @param [String] birth_number
