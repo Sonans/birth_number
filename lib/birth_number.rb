@@ -1,6 +1,7 @@
 # frozen-string-literal: true
 require 'birth_number/version'
 require 'date'
+require 'dry-equalizer'
 
 # Class representing a Norwegian "Birth Number" ("Fødselsnummer").
 #
@@ -19,6 +20,8 @@ require 'date'
 #
 # @author Jo-Herman Haugholt <jo-herman@sonans.no>
 class BirthNumber
+  include Dry::Equalizer(:birth_date, :personal_number)
+
   # Birth Date
   # @return [Date]
   attr_reader :birth_date
@@ -87,24 +90,8 @@ class BirthNumber
     birth_date.strftime('%d%m%y') + format('%05d', personal_number.to_i)
   end
 
-  def ==(other)
-    unless other.respond_to?(:birth_date) && other.respond_to?(:personal_number)
-      return false
-    end
-
-    birth_date == other.birth_date && personal_number == other.personal_number
-  end
-
   def ===(other)
     to_s == other.to_s
-  end
-
-  def eql?(other)
-    self == other
-  end
-
-  def hash
-    to_s.hash
   end
 
   # @!group Private Class Methods
