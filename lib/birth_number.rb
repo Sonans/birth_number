@@ -20,11 +20,11 @@ require 'date'
 class BirthNumber
   # Birth Date
   # @return [Date]
-  attr_accessor :birth_date
+  attr_reader :birth_date
 
   # Personal Number
   # @return [String]
-  attr_accessor :personal_number
+  attr_reader :personal_number
 
   # Parse a 11-digit Birth Number
   #
@@ -56,13 +56,13 @@ class BirthNumber
   # @param [#to_date,#to_s] birth_date
   # @param [#to_i] personal_number
   def initialize(birth_date, personal_number)
-    if birth_date.respond_to? :to_date
-      self.birth_date = birth_date.to_date
-    else
-      self.birth_date = Date.parse(birth_date.to_s)
-    end
+    @birth_date = if birth_date.respond_to? :to_date
+                    birth_date.to_date
+                  else
+                    Date.parse(birth_date.to_s)
+                  end
 
-    self.personal_number = format('%05d', personal_number.to_i)
+    @personal_number = format('%05d', personal_number.to_i)
   end
 
   # Check if this birth number is valid
