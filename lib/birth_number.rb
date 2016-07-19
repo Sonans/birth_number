@@ -90,6 +90,14 @@ class BirthNumber
     birth_date.strftime('%d%m%y') + format('%05d', personal_number.to_i)
   end
 
+  def to_hash
+    {
+      birth_date: birth_date,
+      personal_number: personal_number
+    }
+  end
+  alias_method :to_h, :to_hash
+
   def ===(other)
     to_s == other.to_s
   end
