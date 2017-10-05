@@ -26,8 +26,11 @@ END
   spec.add_runtime_dependency 'dry-equalizer', '~> 0.2.0'
 
   spec.add_development_dependency 'bundler', '~> 1.10'
+  spec.add_development_dependency 'mutant', '~> 0.8.14'
+  spec.add_development_dependency 'mutant-rspec', '~> 0.8.14'
   spec.add_development_dependency 'rake', '~> 10.0'
   spec.add_development_dependency 'rspec', '~> 3.3'
+  spec.add_development_dependency 'rspec-parameterized', '~> 0.4.0'
   spec.add_development_dependency 'rubocop', '~> 0.41.0'
   spec.add_development_dependency 'reek', '~> 4.2'
 end

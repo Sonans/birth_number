@@ -1,130 +1,166 @@
 require 'birth_number'
 require 'date'
-
-VALID_BIRTH_NUMBERS   = %w(01017000027 12056647528 09063725843)
-INVALID_BIRTH_NUMBERS = %w(01017000000 99999999999 23)
-
-MALE_BIRTH_NUMBERS   = %w(06044530323 02028325544 17071942961)
-FEMALE_BIRTH_NUMBERS = %w(02057048010 16021002872 06090018203)
-
-HISTORIC_BIRTH_NUMBERS       = %w(11067760303 04078173039 30098454744)
-PRE_EPOCH_BIRTH_NUMBERS      = %w(26013207819 24055102798 27065923713)
-PRE_MILLENIA_BIRTH_NUMBERS   = %w(07067816387 22108720631 04019822821)
-POST_MILLENNIA_BIRTH_NUMBERS = %w(26030291270 18070582364 14041163918)
+require 'csv'
 
 RSpec.describe BirthNumber do
-  describe '.initialize' do
-    it 'creates a new BirthNumber when passed a Date object' do
-      expect(described_class.new(Date.new(1970, 1, 1), '00027')).to be_instance_of described_class
+  where do
+    table = CSV.read File.expand_path('birth_numbers.csv', __dir__),
+                     headers: true,
+                     skip_blanks: true,
+                     header_converters: :symbol
+
+    rows = table.map do |row|
+      hsh         = row.to_hash
+      hsh[:valid] = hsh[:valid] == 'true'
+      hsh[:date]  = Date.parse(hsh[:date])
+
+      ["with birth number #{row[:birth_number]}", hsh]
     end
 
-    it 'creates a new BirthNumber when passed a date string' do
-      expect(described_class.new('1970-01-01', '00027')).to be_instance_of described_class
+    rows.to_h
+  end
+
+  with_them do
+    describe '.new' do
+      let(:personal_number) { birth_number[-5, 5] }
+
+      context 'with valid date object as argument' do
+        subject { described_class.new(date, personal_number)}
+        it do
+          expect { described_class.new(date, personal_number) }
+            .to_not raise_error
+        end
+
+        it do
+          is_expected.to have_attributes birth_date: be_a(Date),
+                                         personal_number: be_a(String)
+        end
+      end
+
+      context 'with valid date string as argument' do
+        subject { described_class.new(date.to_s, personal_number) }
+        it do
+          expect { described_class.new(date.to_s, personal_number) }
+            .to_not raise_error
+        end
+
+        it do
+          is_expected.to have_attributes birth_date: be_a(Date),
+                                         personal_number: be_a(String)
+        end
+      end
+    end
+
+    describe '.valid?' do
+      subject { described_class.valid? birth_number }
+
+      it { is_expected.to be valid }
+    end
+
+    describe '#valid?' do
+      subject { described_class.parse(birth_number).valid? }
+
+      it { is_expected.to be valid }
+    end
+
+    describe '.parse' do
+      subject { described_class.parse(birth_number) }
+
+      it { is_expected.to be_an described_class }
+    end
+
+    describe '#to_s' do
+      subject { described_class.parse(birth_number).to_s }
+
+      it { is_expected.to eq birth_number }
+    end
+
+    describe '#birth_date' do
+      subject { described_class.parse(birth_number).birth_date }
+
+      it { is_expected.to eq date }
+    end
+
+    describe '#male?' do
+      let(:male?) { sex == 'm' }
+      subject { described_class.parse(birth_number).male? }
+
+      it { is_expected.to eq male? }
+    end
+
+    describe '#female?' do
+      let(:female?) { sex == 'f' }
+      subject { described_class.parse(birth_number).female? }
+
+      it { is_expected.to eq female? }
+    end
+
+    describe '#to_hash' do
+      let(:personal_number) { birth_number[-5, 5] }
+      subject { described_class.parse(birth_number).to_hash }
+
+      it { is_expected.to be_an Hash }
+      it do
+        is_expected.to eq({ birth_date: date, personal_number: personal_number })
+      end
     end
   end
 
-  describe '.valid?' do
-    VALID_BIRTH_NUMBERS.each do |birth_number|
-      it "is true for \"#{birth_number}\"" do
-        expect(described_class.valid? birth_number).to be true
+  context 'instance object' do
+    let(:birth_number) { '01017000027' }
+    let(:same_birth_number) { birth_number }
+    let(:other_birth_number) { '12056647528' }
+
+    subject { described_class.parse(birth_number) }
+
+    it do
+      is_expected.to satisfy do |birth_number|
+        birth_number == described_class.parse(same_birth_number)
+      end
+    end
+    it do
+      is_expected.to_not satisfy do |birth_number|
+        birth_number == described_class.parse(other_birth_number)
       end
     end
 
-    INVALID_BIRTH_NUMBERS.each do |birth_number|
-      it "is false for \"#{birth_number}\"" do
-        expect(described_class.valid? birth_number).to be false
+    it do
+      is_expected.to satisfy do |birth_number|
+        birth_number === same_birth_number
       end
     end
-  end
-
-  describe '.to_s' do
-    it 'correctly formats the birth number' do
-      expect(described_class.new(Date.new(1970, 1, 1), '00027').to_s).to eq '01017000027'
-    end
-  end
-
-  describe '.parse' do
-    VALID_BIRTH_NUMBERS.each do |birth_number|
-      it "successfully parses \"#{birth_number}\"" do
-        expect(described_class.parse(birth_number)).to_not be_nil
+    it do
+      is_expected.to_not satisfy do |birth_number|
+        birth_number === other_birth_number
       end
     end
 
-    it 'parses the birth date of "01017000027" to "1970-01-01"' do
-      birth_number = described_class.parse('01017000027')
-      expect(birth_number.birth_date).to eq Date.new(1970, 01, 01)
-    end
-
-    POST_MILLENNIA_BIRTH_NUMBERS.each do |birth_number|
-      it "parses the birth year as 20XX for #{birth_number}" do
-        expect(BirthNumber.parse(birth_number).birth_date.year).to be_between(2000, 2039)
+    it do
+      is_expected.to satisfy do |birth_number|
+        birth_number.eql? described_class.parse(same_birth_number)
       end
     end
-
-    (PRE_EPOCH_BIRTH_NUMBERS + PRE_MILLENIA_BIRTH_NUMBERS).each do |birth_number|
-      it "parses the birth year as 19XX for #{birth_number}" do
-        expect(BirthNumber.parse(birth_number).birth_date.year).to be_between(1900, 1999)
-      end
-    end
-
-    HISTORIC_BIRTH_NUMBERS.each do |birth_number|
-      it "parses the birth year as 18XX for #{birth_number}" do
-        expect(BirthNumber.parse(birth_number).birth_date.year).to be_between(1854, 1899)
+    it do
+      is_expected.to_not satisfy do |birth_number|
+        birth_number.eql? described_class.parse(other_birth_number)
       end
     end
   end
 
-  describe '#male?' do
-    MALE_BIRTH_NUMBERS.each do |birth_number|
-      it "is true for \"#{birth_number}\"" do
-        expect(BirthNumber.parse(birth_number)).to be_male
+  context 'with invalid birth number' do
+    where do
+      {
+        '(too short)' => { birth_number: '010170' },
+        '(too long)'  => { birth_number: '010170000000' },
+        '(bad date)'  => { birth_number: '0' * 11 }
+      }
+    end
+
+    with_them do
+      it do
+        expect { described_class.parse birth_number }
+          .to raise_error ArgumentError
       end
-    end
-
-    FEMALE_BIRTH_NUMBERS.each do |birth_number|
-      it "is false for \"#{birth_number}\"" do
-        expect(BirthNumber.parse(birth_number)).to_not be_male
-      end
-    end
-  end
-
-  describe '#female?' do
-    FEMALE_BIRTH_NUMBERS.each do |birth_number|
-      it "is true for \"#{birth_number}\"" do
-        expect(BirthNumber.parse(birth_number)).to be_female
-      end
-    end
-
-    MALE_BIRTH_NUMBERS.each do |birth_number|
-      it "is false for \"#{birth_number}\"" do
-        expect(BirthNumber.parse(birth_number)).to_not be_female
-      end
-    end
-  end
-
-  describe '==' do
-    it 'is true for the same birth number' do
-      expect(described_class.parse('01017000027')).to eq described_class.parse('01017000027')
-    end
-
-    it 'is false for a different birth number' do
-      expect(described_class.parse('01017000027')).to_not eq described_class.parse('12056647528')
-    end
-  end
-
-  describe '===' do
-    it 'is true for the same birth number given as a string' do
-      expect(described_class.parse('01017000027')).to satisfy { |value| value === '01017000027' }
-    end
-  end
-
-  describe 'eql?' do
-    it 'is true for the same birth number' do
-      expect(described_class.parse('01017000027')).to eql described_class.parse('01017000027')
-    end
-
-    it 'is false for a different birth number' do
-      expect(described_class.parse('01017000027')).to_not eql described_class.parse('12056647528')
     end
   end
 end
